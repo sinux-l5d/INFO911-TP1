@@ -48,13 +48,41 @@ Mat histogrammes(Mat f) {
   return histView2;
 }
 
+void egalise(Mat f, double* H) {
+  f.forEach<uchar>([&](uchar &p, const int *position) -> void {
+    p = H[p] * 255;
+  });
+}
 
 int main(int argc, char **argv) {
   namedWindow("TP1");                        // crée une fenêtre
-  Mat f = imread(argv[1], IMREAD_GRAYSCALE); // lit l'image
+  Mat fOrigine = imread(argv[1], IMREAD_GRAYSCALE); // lit l'image en niveau de gris
+  Mat f = fOrigine.clone();
+  // egalise(f, histoCumule(histo(f)));
   imshow("TP1", f);                          // l'affiche dans la fenêtre
   // affiche l'histogramme dans une autre fenêtre
   namedWindow("Histogramme");
   imshow("Histogramme", histogrammes(f));
-  while (waitKey(50) < 0) {}
+  int key;
+  // unless q pressed
+  while ((key = waitKey(50)) != 113) {
+    switch (key)
+    {
+    case 101: // e
+      egalise(f, histoCumule(histo(f)));
+      std::cout << "egalise" << std::endl;
+      imshow("TP1", f);
+      imshow("Histogramme", histogrammes(f));
+      break;
+    case 114:
+      f = fOrigine.clone();
+      std::cout << "reset" << std::endl;
+      imshow("TP1", f);
+      imshow("Histogramme", histogrammes(f));
+      break;
+    default:
+      if (key != -1) std::cout << "key pressed: " << key << std::endl;
+      break;
+    }
+  }
 }
