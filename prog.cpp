@@ -19,6 +19,15 @@ double* histo(Mat f) {
   return hist;
 }
 
+double* histoCumule(double *hist) {
+  double *histCumule = new double[256];
+  histCumule[0] = hist[0];
+  for (int i = 1; i < 256; i++) {
+    histCumule[i] = histCumule[i - 1] + hist[i];
+  }
+  return histCumule;
+}
+
 Mat histoToMat(double *hist) {
   double max = *std::max_element(hist, hist + 256);
   Mat histView = Mat::zeros(256, 256, CV_8UC1);
@@ -28,6 +37,17 @@ Mat histoToMat(double *hist) {
   return histView;
 }
 
+Mat histogrammes(Mat f) {
+  double *hist = histo(f);
+  double *histCumule = histoCumule(hist);
+  Mat histView = histoToMat(hist);
+  Mat histCumuleView = histoToMat(histCumule);
+  Mat histView2 = Mat::zeros(256, 512, CV_8UC1);
+  histView.copyTo(histView2(Rect(0, 0, 256, 256)));
+  histCumuleView.copyTo(histView2(Rect(256, 0, 256, 256)));
+  return histView2;
+}
+
 
 int main(int argc, char **argv) {
   namedWindow("TP1");                        // crée une fenêtre
@@ -35,15 +55,6 @@ int main(int argc, char **argv) {
   imshow("TP1", f);                          // l'affiche dans la fenêtre
   // affiche l'histogramme dans une autre fenêtre
   namedWindow("Histogramme");
-  double *h = histo(f);
-  // affiche l'histogramme
-  std::cout << "\nHistogramme :" << std::endl;
-  for (int i = 0; i < 256; i++) {
-    std::cout << h[i] << " ";
-  }
-  std::cout << std::endl;
-
-  Mat histView = histoToMat(h);
-  imshow("Histogramme", histView);
+  imshow("Histogramme", histogrammes(f));
   while (waitKey(50) < 0) {}
 }
