@@ -1,6 +1,5 @@
 # Custom
 .cache/
-.vscode/
 prog
 
 # CMake
