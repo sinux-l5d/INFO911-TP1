@@ -1,5 +1,6 @@
 # Custom
 .cache/
+build/
 prog
 
 # CMake
