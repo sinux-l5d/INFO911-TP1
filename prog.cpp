@@ -70,6 +70,35 @@ void egaliseCouleur(Mat f) {
   cvtColor(hsv, f, COLOR_HSV2BGR);
 }
 
+Mat tramage_floyd_steinberg( cv::Mat input ) {
+  Mat output;
+  input.convertTo(output, CV_32FC1);
+
+  for (int y = 0; y < output.rows; y++) {
+    for (int x = 0; x < output.cols; x++) {
+      float oldPixel = output.at<float>(y, x);
+      float newPixel = round(oldPixel / 255) * 255;
+      output.at<float>(y, x) = newPixel;
+      float error = oldPixel - newPixel;
+      if (x < output.cols - 1) {
+        output.at<float>(y, x + 1) += error * 7 / 16;
+      }
+      if (x > 0 && y < output.rows - 1) {
+        output.at<float>(y + 1, x - 1) += error * 3 / 16;
+      }
+      if (y < output.rows - 1) {
+        output.at<float>(y + 1, x) += error * 5 / 16;
+      }
+      if (x < output.cols - 1 && y < output.rows - 1) {
+        output.at<float>(y + 1, x + 1) += error * 1 / 16;
+      }
+    }
+  }
+
+  output.convertTo(output, CV_8UC1);
+  return output;
+}
+
 int main(int argc, char **argv) {
   namedWindow("TP1");                        // crée une fenêtre
   Mat fOrigine = imread(argv[1]); // lit l'image en niveau de gris
@@ -101,6 +130,12 @@ int main(int argc, char **argv) {
       else 
         cvtColor(fOrigine, f, COLOR_BGR2GRAY);
       
+      imshow("TP1", f);
+      imshow("Histogramme", histogrammes(f));
+      break;
+    case 116: // (t)ramage
+      if (f.channels() != 1) break;
+      f = tramage_floyd_steinberg(f);
       imshow("TP1", f);
       imshow("Histogramme", histogrammes(f));
       break;
