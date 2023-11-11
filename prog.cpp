@@ -253,23 +253,23 @@ int main(int argc, char **argv)
   // unless q pressed
   while ((key = waitKey(50)) != 113)
   {
-    switch (key)
+    switch (key & 0xff)
     {
-    case 101: // (e)galise
+    case 'e': // (e)galise
       f.type() == CV_8UC1 ? egalise(f) : egaliseCouleur(f);
       break;
-    case 114: // (r)eset
+    case 'r': // (r)eset
       f = fOrigine.clone();
       std::cout << "reset" << std::endl;
       break;
-    case 115: // (s)witch between BGR and greyscale (and reset)
+    case 's': // (s)witch between BGR and greyscale (and reset)
       if (f.type() == CV_8UC1)
         f = fOrigine.clone();
       else
         cvtColor(fOrigine, f, COLOR_BGR2GRAY);
       break;
-    case 116:                  // (t)ramage
-      if (waitKey(200) == 116) // tt (CMYK using generic)
+    case 't':                         // (t)ramage
+      if (waitKey(200) & 0xff == 't') // tt (CMYK using generic)
       {
         std::vector<cv::Vec3f> cmyk = {
             {1.0, 1.0, 0},
