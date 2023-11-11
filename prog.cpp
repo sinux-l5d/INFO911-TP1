@@ -48,15 +48,31 @@ Mat histogrammes(Mat f) {
   return histView2;
 }
 
-void egalise(Mat f, double* H) {
+void egalise(Mat f) {
+  double *H = histoCumule(histo(f));
   f.forEach<uchar>([&](uchar &p, const int *position) -> void {
     p = H[p] * 255;
   });
 }
 
+void egaliseCouleur(Mat f) {
+  Mat hsv;
+  cvtColor(f, hsv, COLOR_BGR2HSV);
+  std::vector<Mat> hsvChannels;
+  split(hsv, hsvChannels);
+  Mat v = hsvChannels[2];
+  double *H = histoCumule(histo(v));
+  v.forEach<uchar>([&](uchar &p, const int *position) -> void {
+    p = H[p] * 255;
+  });
+  hsvChannels[2] = v;
+  merge(hsvChannels, hsv);
+  cvtColor(hsv, f, COLOR_HSV2BGR);
+}
+
 int main(int argc, char **argv) {
   namedWindow("TP1");                        // crée une fenêtre
-  Mat fOrigine = imread(argv[1], IMREAD_GRAYSCALE); // lit l'image en niveau de gris
+  Mat fOrigine = imread(argv[1]); // lit l'image en niveau de gris
   Mat f = fOrigine.clone();
   // egalise(f, histoCumule(histo(f)));
   imshow("TP1", f);                          // l'affiche dans la fenêtre
@@ -68,15 +84,23 @@ int main(int argc, char **argv) {
   while ((key = waitKey(50)) != 113) {
     switch (key)
     {
-    case 101: // e
-      egalise(f, histoCumule(histo(f)));
-      std::cout << "egalise" << std::endl;
+    case 101: // (e)galise
+      f.type() == CV_8UC1 ?  egalise(f) : egaliseCouleur(f);
       imshow("TP1", f);
       imshow("Histogramme", histogrammes(f));
       break;
-    case 114:
+    case 114: // (r)eset
       f = fOrigine.clone();
       std::cout << "reset" << std::endl;
+      imshow("TP1", f);
+      imshow("Histogramme", histogrammes(f));
+      break;
+    case 115: // (s)witch between BGR and greyscale (and reset)
+      if (f.type() == CV_8UC1) 
+        f = fOrigine.clone();
+      else 
+        cvtColor(fOrigine, f, COLOR_BGR2GRAY);
+      
       imshow("TP1", f);
       imshow("Histogramme", histogrammes(f));
       break;
@@ -84,5 +108,6 @@ int main(int argc, char **argv) {
       if (key != -1) std::cout << "key pressed: " << key << std::endl;
       break;
     }
+
   }
 }
