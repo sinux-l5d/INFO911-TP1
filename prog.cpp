@@ -239,7 +239,7 @@ Mat tramage_floyd_steinberg(Mat input, std::vector<Vec3f> colors)
   return output;
 }
 
-int main(int argc, char **argv)
+int img(int argc, char **argv)
 {
   namedWindow("TP1");             // crée une fenêtre
   Mat fOrigine = imread(argv[1]); // lit l'image en niveau de gris
@@ -293,4 +293,38 @@ int main(int argc, char **argv)
     imshow("TP1", f);
     imshow("Histogramme", histogrammes(f));
   }
+  return 0;
+}
+
+int cam(int argc, char **argv)
+{
+  VideoCapture cap(0);
+  if (!cap.isOpened())
+    return 1;
+  Mat frame, edges;
+  namedWindow("edges", WINDOW_AUTOSIZE);
+  for (;;)
+  {
+    cap >> frame;
+    cvtColor(frame, edges, COLOR_BGR2GRAY);
+    edges = tramage_floyd_steinberg_grayscale(edges); // exemple
+    imshow("edges", edges);
+    int key_code = waitKey(30);
+    int ascii_code = key_code & 0xff;
+    if (ascii_code == 'q')
+      break;
+  }
+  return 0;
+}
+
+int main(int argc, char **argv)
+{
+  // two subcommands: img and cam
+  if (argc > 1 && strcmp(argv[1], "img") == 0)
+    return img(argc - 1, argv + 1);
+  else if (argc > 1 && strcmp(argv[1], "cam") == 0)
+    return cam(argc - 1, argv + 1);
+  else
+    std::cout << "usage: " << argv[0] << " img|cam [args]" << std::endl;
+  return 1;
 }
