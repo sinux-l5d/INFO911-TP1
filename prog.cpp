@@ -57,14 +57,16 @@ Mat histogrammes(Mat f)
   return histView2;
 }
 
-void egalise(Mat f)
+Mat egalise(Mat fIn)
 {
-  double *H = histoCumule(histo(f));
+  double *H = histoCumule(histo(fIn));
+  Mat f = fIn.clone();
   f.forEach<uchar>([&](uchar &p, const int *position) -> void
                    { p = H[p] * 255; });
+  return f;
 }
 
-void egaliseCouleur(Mat f)
+Mat egaliseCouleur(Mat f)
 {
   Mat hsv;
   cvtColor(f, hsv, COLOR_BGR2HSV);
@@ -76,7 +78,10 @@ void egaliseCouleur(Mat f)
                    { p = H[p] * 255; });
   hsvChannels[2] = v;
   merge(hsvChannels, hsv);
-  cvtColor(hsv, f, COLOR_HSV2BGR);
+
+  Mat output;
+  cvtColor(hsv, output, COLOR_HSV2BGR);
+  return output;
 }
 
 Mat tramage_floyd_steinberg_grayscale(Mat input)
@@ -302,17 +307,59 @@ int cam(int argc, char **argv)
   if (!cap.isOpened())
     return 1;
   Mat frame, edges;
+  std::vector<cv::Vec3f> cmyk;
   namedWindow("edges", WINDOW_AUTOSIZE);
-  for (;;)
+  bool stop = false;
+  int key_code = -1;
+  int ascii_code = -1;
+  bool isColor = true;
+  while (!stop)
   {
     cap >> frame;
-    cvtColor(frame, edges, COLOR_BGR2GRAY);
-    edges = tramage_floyd_steinberg_grayscale(edges); // exemple
-    imshow("edges", edges);
-    int key_code = waitKey(30);
-    int ascii_code = key_code & 0xff;
-    if (ascii_code == 'q')
+
+    if (!isColor)
+      cvtColor(frame, edges, COLOR_BGR2GRAY);
+    else
+      edges = frame.clone();
+
+    key_code = waitKey(10);
+    ascii_code = key_code > 0 ? key_code & 0xff : ascii_code; // change only if key_code > 0
+    switch (ascii_code)
+    {
+    case 'e': // (e)galise
+      edges = edges.type() == CV_8UC1 ? egalise(edges) : egaliseCouleur(edges);
       break;
+    case 's': // (s)witch between BGR and greyscale (and reset)
+      isColor = !isColor;
+      std::cout << "is now " << (isColor ? "colorized" : "uncolorized") << std::endl;
+      ascii_code = -1;
+      break;
+    case 't': // (t)ramage
+      edges = edges.channels() == 1 ? tramage_floyd_steinberg_grayscale(edges) : tramage_floyd_steinberg_BGR(edges);
+      break;
+    case 'c': // tramage (c)myk
+      cmyk = {
+          {1.0, 1.0, 0},
+          {0, 1.0, 1.0},
+          {1.0, 0, 1.0},
+          {0, 0, 0},
+          {1.0, 1.0, 1.0}, // paper white
+      };
+      edges = edges.channels() != 1 ? tramage_floyd_steinberg(edges, cmyk) : edges;
+      break;
+    case 'q':
+      stop = true;
+      break;
+    case 'r': // (r)eset, no transformation
+      isColor = true;
+      ascii_code = -1;
+      break;
+    default:
+      if (key_code != -1)
+        std::cout << "key_code: " << key_code << " ascii_code: " << ascii_code << std::endl;
+      break;
+    }
+    imshow("edges", edges);
   }
   return 0;
 }

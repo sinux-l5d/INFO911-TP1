@@ -5,6 +5,9 @@ find_package( OpenCV REQUIRED )
 find_package( OpenCV REQUIRED COMPONENTS highgui)
 include_directories( ${OpenCV_INCLUDE_DIRS} )
 
+set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -Og")
+set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O3")
+
 SET( MAIN_EXEC
      prog 
      # vous pouvez ajouter d'autres programmes ici
